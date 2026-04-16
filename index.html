@@ -167,21 +167,20 @@
     let ferramentasFaltando = [];
     let detalhesAnalise = [];
 
-    // Zonas aproximadas baseadas na foto padrão do seu armário.
-    // left, top, width, height são percentuais da imagem.
+    // Zonas com thresholds ajustados para reduzir falso positivo
     const zonas = [
-      { nome: "Ferramentas T esquerdas", left: 0.02, top: 0.10, width: 0.23, height: 0.56, threshold: 11 },
-      { nome: "Centros superiores", left: 0.28, top: 0.12, width: 0.18, height: 0.16, threshold: 10 },
-      { nome: "Chaves fixas", left: 0.45, top: 0.12, width: 0.12, height: 0.16, threshold: 10 },
-      { nome: "Paquímetro", left: 0.58, top: 0.08, width: 0.18, height: 0.12, threshold: 9 },
-      { nome: "Centros inferiores", left: 0.28, top: 0.32, width: 0.20, height: 0.18, threshold: 10 },
-      { nome: "Mandris pretos", left: 0.52, top: 0.34, width: 0.16, height: 0.15, threshold: 10 },
-      { nome: "Ferramenta branca vertical", left: 0.64, top: 0.23, width: 0.08, height: 0.32, threshold: 8 },
-      { nome: "Conjunto de lâminas", left: 0.76, top: 0.20, width: 0.10, height: 0.32, threshold: 10 },
-      { nome: "Martelo", left: 0.86, top: 0.22, width: 0.11, height: 0.28, threshold: 10 },
-      { nome: "Bandeja inferior esquerda", left: 0.03, top: 0.72, width: 0.22, height: 0.23, threshold: 10 },
-      { nome: "Base inferior central", left: 0.34, top: 0.74, width: 0.30, height: 0.18, threshold: 10 },
-      { nome: "Suporte inferior direito", left: 0.77, top: 0.68, width: 0.18, height: 0.26, threshold: 10 }
+      { nome: "Ferramentas T esquerdas", left: 0.02, top: 0.10, width: 0.23, height: 0.56, threshold: 22 },
+      { nome: "Centros superiores", left: 0.28, top: 0.12, width: 0.18, height: 0.16, threshold: 20 },
+      { nome: "Chaves fixas", left: 0.45, top: 0.12, width: 0.12, height: 0.16, threshold: 20 },
+      { nome: "Paquímetro", left: 0.58, top: 0.08, width: 0.18, height: 0.12, threshold: 18 },
+      { nome: "Centros inferiores", left: 0.28, top: 0.32, width: 0.20, height: 0.18, threshold: 20 },
+      { nome: "Mandris pretos", left: 0.52, top: 0.34, width: 0.16, height: 0.15, threshold: 20 },
+      { nome: "Ferramenta branca vertical", left: 0.64, top: 0.23, width: 0.08, height: 0.32, threshold: 18 },
+      { nome: "Conjunto de lâminas", left: 0.76, top: 0.20, width: 0.10, height: 0.32, threshold: 20 },
+      { nome: "Martelo", left: 0.86, top: 0.22, width: 0.11, height: 0.28, threshold: 20 },
+      { nome: "Bandeja inferior esquerda", left: 0.03, top: 0.72, width: 0.22, height: 0.23, threshold: 20 },
+      { nome: "Base inferior central", left: 0.34, top: 0.74, width: 0.30, height: 0.18, threshold: 20 },
+      { nome: "Suporte inferior direito", left: 0.77, top: 0.68, width: 0.18, height: 0.26, threshold: 20 }
     ];
 
     function login(){
@@ -233,7 +232,7 @@
     }
 
     function criarCanvasNormalizado(imgA, imgB){
-      const largura = 900;
+      const largura = 700;
       const alturaBase = Math.min(imgA.height / imgA.width, imgB.height / imgB.width);
       const altura = Math.round(largura * alturaBase);
 
@@ -271,7 +270,7 @@
 
         const diff = (dr + dg + db) / 3;
 
-        if(diff > 28){
+        if(diff > 45){
           changed++;
         }
       }
@@ -359,7 +358,7 @@
         resumo = "Ferramentas faltando: " + ferramentasFaltando.join(", ");
       }
 
-      alert("Registro pronto para salvar.\n\n" + resumo + "\n\nNa próxima etapa eu ligo o salvamento real.");
+      alert("Registro pronto para salvar.\n\n" + resumo);
     }
   </script>
 
