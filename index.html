@@ -134,6 +134,47 @@ function carregarFoto(event){
 }
 
 function analisarFerramentas(){
+
+  const lista = document.getElementById("listaFerramentas")
+
+  // SIMULAÇÃO INICIAL (próximo passo será visão computacional)
+  const ferramentas = [
+    "Ferramentas T",
+    "Centros superiores",
+    "Chaves fixas",
+    "Paquímetro",
+    "Centros inferiores",
+    "Mandris pretos",
+    "Martelo",
+    "Lâminas"
+  ]
+
+  let faltando = []
+
+  ferramentas.forEach(f => {
+
+    if(Math.random() < 0.2){
+      faltando.push(f)
+    }
+
+  })
+
+  if(faltando.length === 0){
+
+    lista.innerHTML =
+    "✔ Armário completo<br>Nenhuma ferramenta faltando"
+
+  }else{
+
+    lista.innerHTML =
+    "Ferramentas faltando:<br><br>• " +
+    faltando.join("<br>• ")
+
+  }
+
+  document.getElementById("resultado").style.display = "block"
+
+}
   // Etapa provisória: aqui vamos ligar a análise automática na próxima fase.
   // Por enquanto, só mostra que a foto foi recebida.
   ferramentasFaltando = [];
