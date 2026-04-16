@@ -14,7 +14,7 @@
     }
 
     .container{
-      max-width:700px;
+      max-width:760px;
       margin:0 auto;
     }
 
@@ -64,7 +64,7 @@
     #resultado{
       display:none;
       background:white;
-      padding:15px;
+      padding:18px;
       border-radius:10px;
       margin-top:20px;
       text-align:left;
@@ -98,6 +98,26 @@
       font-size:16px;
       line-height:1.5;
     }
+
+    .small{
+      font-size:14px;
+      color:#666;
+      line-height:1.4;
+    }
+
+    ul{
+      padding-left:22px;
+    }
+
+    li{
+      margin-bottom:6px;
+    }
+
+    #statusAnalise{
+      margin-top:12px;
+      font-size:15px;
+      color:#333;
+    }
   </style>
 </head>
 <body>
@@ -116,6 +136,7 @@
         <h3 class="titulo">Foto padrão do armário</h3>
         <img id="fotoPadrao" src="armario_padrao.jpg" alt="Foto padrão do armário">
         <p class="info"><b>Alinhe o armário como na foto padrão antes de tirar a foto.</b></p>
+        <p class="small">A foto deve pegar o armário inteiro, de frente, com a porta totalmente aberta.</p>
 
         <input
           type="file"
@@ -129,6 +150,8 @@
         <button onclick="abrirCamera()">Tirar foto do armário</button>
 
         <img id="previewFoto" alt="Foto capturada do armário">
+
+        <div id="statusAnalise"></div>
       </div>
 
       <div id="resultado">
@@ -142,6 +165,24 @@
   <script>
     let imagemCapturada = "";
     let ferramentasFaltando = [];
+    let detalhesAnalise = [];
+
+    // Zonas aproximadas baseadas na foto padrão do seu armário.
+    // left, top, width, height são percentuais da imagem.
+    const zonas = [
+      { nome: "Ferramentas T esquerdas", left: 0.02, top: 0.10, width: 0.23, height: 0.56, threshold: 11 },
+      { nome: "Centros superiores", left: 0.28, top: 0.12, width: 0.18, height: 0.16, threshold: 10 },
+      { nome: "Chaves fixas", left: 0.45, top: 0.12, width: 0.12, height: 0.16, threshold: 10 },
+      { nome: "Paquímetro", left: 0.58, top: 0.08, width: 0.18, height: 0.12, threshold: 9 },
+      { nome: "Centros inferiores", left: 0.28, top: 0.32, width: 0.20, height: 0.18, threshold: 10 },
+      { nome: "Mandris pretos", left: 0.52, top: 0.34, width: 0.16, height: 0.15, threshold: 10 },
+      { nome: "Ferramenta branca vertical", left: 0.64, top: 0.23, width: 0.08, height: 0.32, threshold: 8 },
+      { nome: "Conjunto de lâminas", left: 0.76, top: 0.20, width: 0.10, height: 0.32, threshold: 10 },
+      { nome: "Martelo", left: 0.86, top: 0.22, width: 0.11, height: 0.28, threshold: 10 },
+      { nome: "Bandeja inferior esquerda", left: 0.03, top: 0.72, width: 0.22, height: 0.23, threshold: 10 },
+      { nome: "Base inferior central", left: 0.34, top: 0.74, width: 0.30, height: 0.18, threshold: 10 },
+      { nome: "Suporte inferior direito", left: 0.77, top: 0.68, width: 0.18, height: 0.26, threshold: 10 }
+    ];
 
     function login(){
       const senha = document.getElementById("senha").value;
@@ -165,58 +206,137 @@
         return;
       }
 
+      document.getElementById("statusAnalise").innerHTML = "Carregando foto...";
       const reader = new FileReader();
 
-      reader.onload = function(e){
+      reader.onload = async function(e){
         imagemCapturada = e.target.result;
 
         const preview = document.getElementById("previewFoto");
         preview.src = imagemCapturada;
         preview.style.display = "block";
 
-        analisarFerramentas();
+        document.getElementById("statusAnalise").innerHTML = "Analisando ferramentas...";
+        await analisarFerramentas();
       };
 
       reader.readAsDataURL(file);
     }
 
-    function analisarFerramentas(){
-      const lista = document.getElementById("listaFerramentas");
-
-      // SIMULAÇÃO INICIAL
-      // Próxima etapa: trocar por análise real com visão computacional.
-      const ferramentas = [
-        "Ferramentas T",
-        "Centros superiores",
-        "Chaves fixas",
-        "Paquímetro",
-        "Centros inferiores",
-        "Mandris pretos",
-        "Martelo",
-        "Lâminas",
-        "Bandeja inferior"
-      ];
-
-      let faltando = [];
-
-      ferramentas.forEach(f => {
-        if(Math.random() < 0.2){
-          faltando.push(f);
-        }
+    function carregarImagem(src){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
       });
+    }
 
-      ferramentasFaltando = faltando;
+    function criarCanvasNormalizado(imgA, imgB){
+      const largura = 900;
+      const alturaBase = Math.min(imgA.height / imgA.width, imgB.height / imgB.width);
+      const altura = Math.round(largura * alturaBase);
 
-      if(ferramentasFaltando.length === 0){
-        lista.innerHTML =
-          "<span class='ok'>✔ Armário completo</span><br>Nenhuma ferramenta faltando.";
-      }else{
-        lista.innerHTML =
-          "<span class='destaque'>Ferramentas faltando:</span><br><br>• " +
-          ferramentasFaltando.join("<br>• ");
+      const canvasA = document.createElement("canvas");
+      canvasA.width = largura;
+      canvasA.height = altura;
+      const ctxA = canvasA.getContext("2d", { willReadFrequently: true });
+      ctxA.drawImage(imgA, 0, 0, largura, altura);
+
+      const canvasB = document.createElement("canvas");
+      canvasB.width = largura;
+      canvasB.height = altura;
+      const ctxB = canvasB.getContext("2d", { willReadFrequently: true });
+      ctxB.drawImage(imgB, 0, 0, largura, altura);
+
+      return { canvasA, canvasB, ctxA, ctxB, largura, altura };
+    }
+
+    function analisarZona(ctxA, ctxB, largura, altura, zona){
+      const x = Math.floor(zona.left * largura);
+      const y = Math.floor(zona.top * altura);
+      const w = Math.floor(zona.width * largura);
+      const h = Math.floor(zona.height * altura);
+
+      const dataA = ctxA.getImageData(x, y, w, h).data;
+      const dataB = ctxB.getImageData(x, y, w, h).data;
+
+      let changed = 0;
+      const totalPixels = w * h;
+
+      for(let i = 0; i < dataA.length; i += 4){
+        const dr = Math.abs(dataA[i] - dataB[i]);
+        const dg = Math.abs(dataA[i + 1] - dataB[i + 1]);
+        const db = Math.abs(dataA[i + 2] - dataB[i + 2]);
+
+        const diff = (dr + dg + db) / 3;
+
+        if(diff > 28){
+          changed++;
+        }
       }
 
-      document.getElementById("resultado").style.display = "block";
+      const percentual = (changed / totalPixels) * 100;
+      return Number(percentual.toFixed(2));
+    }
+
+    async function analisarFerramentas(){
+      const lista = document.getElementById("listaFerramentas");
+      const status = document.getElementById("statusAnalise");
+
+      try{
+        const imgPadrao = await carregarImagem("armario_padrao.jpg");
+        const imgAtual = await carregarImagem(imagemCapturada);
+
+        const { ctxA, ctxB, largura, altura } = criarCanvasNormalizado(imgPadrao, imgAtual);
+
+        ferramentasFaltando = [];
+        detalhesAnalise = [];
+
+        zonas.forEach(zona => {
+          const percentual = analisarZona(ctxA, ctxB, largura, altura, zona);
+          const faltando = percentual >= zona.threshold;
+
+          detalhesAnalise.push({
+            nome: zona.nome,
+            percentual,
+            threshold: zona.threshold,
+            faltando
+          });
+
+          if(faltando){
+            ferramentasFaltando.push(zona.nome);
+          }
+        });
+
+        if(ferramentasFaltando.length === 0){
+          lista.innerHTML =
+            "<span class='ok'>✔ Armário completo</span><br>Nenhuma ferramenta faltando detectada.";
+        }else{
+          let html = "<span class='destaque'>Ferramentas faltando detectadas:</span><br><br><ul>";
+          ferramentasFaltando.forEach(item => {
+            html += "<li>" + item + "</li>";
+          });
+          html += "</ul>";
+          html += "<div class='small'><b>Detalhes técnicos:</b><br>";
+
+          detalhesAnalise.forEach(item => {
+            html += item.nome + ": diferença " + item.percentual + "%";
+            html += " (limite " + item.threshold + "%)<br>";
+          });
+
+          html += "</div>";
+          lista.innerHTML = html;
+        }
+
+        document.getElementById("resultado").style.display = "block";
+        status.innerHTML = "Análise concluída.";
+      }catch(erro){
+        console.error(erro);
+        status.innerHTML = "Erro ao analisar a imagem.";
+        lista.innerHTML = "Não foi possível comparar a foto com o padrão.";
+        document.getElementById("resultado").style.display = "block";
+      }
     }
 
     function salvarRegistro(){
@@ -234,12 +354,12 @@
 
       let resumo = "";
       if(ferramentasFaltando.length === 0){
-        resumo = "Nenhuma ferramenta faltando";
+        resumo = "Nenhuma ferramenta faltando detectada.";
       }else{
         resumo = "Ferramentas faltando: " + ferramentasFaltando.join(", ");
       }
 
-      alert("Registro pronto para salvar.\n\n" + resumo);
+      alert("Registro pronto para salvar.\n\n" + resumo + "\n\nNa próxima etapa eu ligo o salvamento real.");
     }
   </script>
 
