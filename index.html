@@ -2,50 +2,59 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Controle do Armário</title>
 
 <style>
-
 body{
-font-family:Arial;
-padding:20px;
-text-align:center;
-background:#f2f2f2;
+  font-family:Arial;
+  padding:20px;
+  text-align:center;
+  background:#f2f2f2;
 }
 
 input{
-width:90%;
-padding:15px;
-font-size:18px;
-margin:10px;
+  width:90%;
+  padding:15px;
+  font-size:18px;
+  margin:10px;
+  box-sizing:border-box;
 }
 
 button{
-width:90%;
-padding:18px;
-font-size:20px;
-margin-top:15px;
-background:#1a73e8;
-color:white;
-border:none;
-border-radius:8px;
+  width:90%;
+  padding:18px;
+  font-size:20px;
+  margin-top:15px;
+  background:#1a73e8;
+  color:white;
+  border:none;
+  border-radius:8px;
 }
 
-#camera{
-width:100%;
-margin-top:15px;
-border:4px solid red;
-display:none;
+#fotoPadrao, #previewFoto{
+  width:100%;
+  margin-top:20px;
+  border-radius:10px;
 }
 
-#fotoPadrao{
-width:100%;
-margin-top:20px;
+#previewFoto{
+  border:4px solid red;
+  display:none;
 }
 
+#sistema{
+  display:none;
+}
+
+#resultado{
+  display:none;
+  background:white;
+  padding:15px;
+  border-radius:10px;
+  margin-top:20px;
+  text-align:left;
+}
 </style>
-
 </head>
 
 <body>
@@ -53,69 +62,103 @@ margin-top:20px;
 <h2>Controle do Armário</h2>
 
 <div id="login">
-
-<input id="nome" placeholder="Nome do professor">
-
-<input id="senha" placeholder="Senha" type="password">
-
-<button onclick="login()">Entrar</button>
-
+  <input id="nome" placeholder="Nome do professor">
+  <input id="senha" placeholder="Senha" type="password">
+  <button onclick="login()">Entrar</button>
 </div>
 
-<div id="sistema" style="display:none">
+<div id="sistema">
+  <h3>Foto padrão do armário</h3>
+  <img id="fotoPadrao" src="armario_padrao.jpg" alt="Foto padrão do armário">
 
-<h3>Foto padrão do armário</h3>
+  <p><b>Alinhe o armário como na foto padrão antes de tirar a foto.</b></p>
 
-<img id="fotoPadrao" src="armario_padrao.jpg">
+  <input
+    type="file"
+    id="cameraInput"
+    accept="image/*"
+    capture="environment"
+    style="display:none"
+    onchange="carregarFoto(event)"
+  >
 
-<button onclick="abrirCamera()">Abrir câmera</button>
+  <button onclick="abrirCamera()">Tirar foto do armário</button>
 
-<video id="camera" autoplay playsinline></video>
+  <img id="previewFoto" alt="Foto capturada do armário">
 
-<button onclick="capturar()">Capturar foto</button>
-
+  <div id="resultado">
+    <h3>Resultado da análise</h3>
+    <div id="listaFerramentas">A análise será feita na próxima etapa.</div>
+    <button onclick="salvarRegistro()">Salvar registro</button>
+  </div>
 </div>
 
 <script>
+let imagemCapturada = "";
+let ferramentasFaltando = [];
 
 function login(){
+  const senha = document.getElementById("senha").value;
 
-const senha=document.getElementById("senha").value
-
-if(senha=="12345"){
-
-document.getElementById("login").style.display="none"
-
-document.getElementById("sistema").style.display="block"
-
-}else{
-
-alert("Senha incorreta")
-
+  if(senha === "12345"){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("sistema").style.display = "block";
+  }else{
+    alert("Senha incorreta");
+  }
 }
 
+function abrirCamera(){
+  document.getElementById("cameraInput").click();
 }
 
-let stream
+function carregarFoto(event){
+  const file = event.target.files[0];
+  if(!file){
+    return;
+  }
 
-async function abrirCamera(){
+  const reader = new FileReader();
 
-stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:"environment"}
-})
+  reader.onload = function(e){
+    imagemCapturada = e.target.result;
 
-document.getElementById("camera").srcObject=stream
+    const preview = document.getElementById("previewFoto");
+    preview.src = imagemCapturada;
+    preview.style.display = "block";
 
-document.getElementById("camera").style.display="block"
+    analisarFerramentas();
+  };
 
+  reader.readAsDataURL(file);
 }
 
-function capturar(){
+function analisarFerramentas(){
+  // Etapa provisória: aqui vamos ligar a análise automática na próxima fase.
+  // Por enquanto, só mostra que a foto foi recebida.
+  ferramentasFaltando = [];
 
-alert("Foto capturada — próxima etapa será análise das ferramentas")
+  document.getElementById("listaFerramentas").innerHTML =
+    "Foto carregada com sucesso.<br>Na próxima etapa vou ligar a detecção automática das ferramentas faltando.";
 
+  document.getElementById("resultado").style.display = "block";
 }
 
+function salvarRegistro(){
+  const nome = document.getElementById("nome").value.trim();
+
+  if(!nome){
+    alert("Digite o nome do professor.");
+    return;
+  }
+
+  if(!imagemCapturada){
+    alert("Tire a foto do armário antes de salvar.");
+    return;
+  }
+
+  alert("Registro pronto para salvar. Na próxima etapa vamos ligar o salvamento com análise automática.");
+}
 </script>
 
 </body>
