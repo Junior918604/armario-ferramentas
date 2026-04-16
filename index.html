@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Controle do Armário</title>
+
+<style>
+
+body{
+font-family:Arial;
+padding:20px;
+text-align:center;
+background:#f2f2f2;
+}
+
+input{
+width:90%;
+padding:15px;
+font-size:18px;
+margin:10px;
+}
+
+button{
+width:90%;
+padding:18px;
+font-size:20px;
+margin-top:15px;
+background:#1a73e8;
+color:white;
+border:none;
+border-radius:8px;
+}
+
+#camera{
+width:100%;
+margin-top:15px;
+border:4px solid red;
+display:none;
+}
+
+#fotoPadrao{
+width:100%;
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Controle do Armário</h2>
+
+<div id="login">
+
+<input id="nome" placeholder="Nome do professor">
+
+<input id="senha" placeholder="Senha" type="password">
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div id="sistema" style="display:none">
+
+<h3>Foto padrão do armário</h3>
+
+<img id="fotoPadrao" src="armario_padrao.jpg">
+
+<button onclick="abrirCamera()">Abrir câmera</button>
+
+<video id="camera" autoplay playsinline></video>
+
+<button onclick="capturar()">Capturar foto</button>
+
+</div>
+
+<script>
+
+function login(){
+
+const senha=document.getElementById("senha").value
+
+if(senha=="12345"){
+
+document.getElementById("login").style.display="none"
+
+document.getElementById("sistema").style.display="block"
+
+}else{
+
+alert("Senha incorreta")
+
+}
+
+}
+
+let stream
+
+async function abrirCamera(){
+
+stream=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment"}
+})
+
+document.getElementById("camera").srcObject=stream
+
+document.getElementById("camera").style.display="block"
+
+}
+
+function capturar(){
+
+alert("Foto capturada — próxima etapa será análise das ferramentas")
+
+}
+
+</script>
+
+</body>
+</html>
